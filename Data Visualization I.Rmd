@@ -1,0 +1,185 @@
+---
+title: "Data Visualization I"
+author: "Maliha Safdar"
+date: "2025-09-25"
+output: github_document
+---
+
+
+```{r setup}
+library(tidyverse)
+library(ggridges)
+library(p8105.datasets)
+data("weather_df")
+```
+
+```{r}
+weather_df
+```
+
+### Make a basic scatterplot
+
+```{r}
+ggplot(weather_df, aes(x = tmin, y = tmax)) # this is blank because we did not specify ggplot what to show so we have to add geom into this code
+
+ggplot(weather_df, aes(x = tmin, y = tmax)) + 
+  geom_point() # Now we have a visualization of the scatterplot
+```
+
+### The code below produces the same thing but helpful if you want to do some pre-processing before making your plot but don’t want to save the intermediate data
+
+```{r}
+weather_df |>
+  ggplot(aes(x = tmin, y = tmax)) + 
+  geom_point()
+
+### Better styling with this code
+
+ggp_weather = 
+  weather_df |>
+  ggplot(aes(x = tmin, y = tmax)) 
+
+ggp_weather + geom_point()
+```
+`There are some missing rows which we want to find`
+
+```{r}
+weather_df |>
+  filter(is.na(tmax))
+```
+`None of these rows that are missing are for CentralPark_NY.`
+
+`ggplot is friendly to the pipe operator so we can use that.`
+### Advaced Scatterplot
+##### We are adding color to different names of variables to identify them on the scatterplot
+```{r}
+ggplot(weather_df, aes(x = tmin, y = tmax)) + 
+  geom_point(aes(color = name))
+```
+### Next add a smooth curve and make the data points a bit transparent. Adding size makes the graph wider
+
+```{r}
+ggplot(weather_df, aes(x = tmin, y = tmax)) + 
+  geom_point(aes(color = name), alpha = .5, size = 0.8) +
+  geom_smooth(se = FALSE)
+
+ggplot(weather_df, aes(x = tmin, y = tmax)) + 
+  geom_point(aes(color = name), alpha = .5, size = 0.8) +
+  geom_smooth(se = FALSE)
+```
+`The curve gives a sense of the relationship between variables, and the transparency shows where data are overlapping. I can’t help but notice, though, that the smooth curve is for all the data but the colors are only for the scatterplot. Turns out that this is due to where I defined the mappings. The X and Y mappings apply to the whole graphic, but color is currently geom-specific. Sometimes you want or need to do this, but for now I don’t like it. If I’m honest, I’m also having a hard time seeing everything on one plot, so I’m going to add facet based on name as well.`
+
+```{r}
+ggplot(weather_df, aes(x = tmin, y = tmax, color = name)) + 
+  geom_point(alpha = .5, size = 0.8) +
+  geom_smooth(se = FALSE) + 
+  facet_grid(. ~ name)
+```
+`We basically created three scatterplots, and made a smooth curve for each one.`
+
+
+##### Next we want to learn about the minimum and maximum temperature in relation to time of the year. And we also want to learn about precipitation. 
+
+```{r}
+ggplot(weather_df, aes(x = date, y = tmax, color = name)) + 
+  geom_point(aes(size = prcp), alpha = .5, size = 0.8) +
+  geom_smooth(se = FALSE) + 
+  facet_grid(. ~ name)
+```
+`Way more interesting! You get a whole range of temperatures in Central Park (sometimes it’s maybe too hot); it’s more temperate near Seattle but it rains all the time; and Molokai is great except for that a few (relatively) cold, rainy days.`
+
+`Making a somewhat more interesting scatterplot.`
+
+```{r}
+weather_df |>
+  ggplot(aes(x = tmin, y = tmax,
+             color = name)) + 
+  geom_point(aes(size = prcp), alpha = 0.3) + 
+  geom_smooth(se = FALSE) + 
+  facet_grid(.~ name)
+```
+
+
+### Learning Assessment 1
+
+
+```{r}
+weather_df |>
+  filter(name == "CentralPark_NY") |>
+  mutate(
+    tmax_fahr = tmax * (9/5) + 32,
+    tmin_fahr = tmin * (9/5) + 32
+  ) |>
+  ggplot(aes(x = tmin_fahr, y = tmax_fahr)) + 
+  geom_point() +
+  geom_smooth(se = FALSE, method = "lm")
+
+```
+
+
+### Small things
+
+```{r}
+weather_df |>
+  ggplot(aes(x = tmin, y= tmax, color = name, shape = name)) + 
+# geom_point(alpha = 0.3) + 
+  geom_smooth(se =FALSE)
+
+weather_df |> 
+  ggplot(aes(x = tmin, y = tmax)) + 
+  geom_point()
+
+### Changing the color of the scar=tterplot
+weather_df |>
+  ggplot(aes(x = tmin, y = tmax )) + 
+  geom_point(color = "#086bfd")
+  
+```
+### Univariate plots
+
+```{r}
+weather_df |>
+  ggplot(aes(x= tmin)) +
+  geom_histogram(color = "white", fill = "red")
+```
+
+`we can overlap the distributions too.`
+
+```{r}
+weather_df |>
+  ggplot(aes(x = tmin, fill = name)) + 
+  geom_histogram()
+```
+`it makes it hard to read it for each of the different areas. SO it is betetr to use the facet_grid code.`
+
+```{r}
+weather_df |>
+ggplot(aes(x = tmin, fill = name)) + 
+  geom_histogram() +
+  facet_grid(name ~ .)
+
+```
+
+### Making a density plot.
+
+
+### Making a boxplot
+
+```{r}
+weather_df |>
+  ggplot(aes(x = name, y = tmin)) + 
+  geom_boxplot(aes(fill = name))
+```
+
+### Making a ridgeplot. 
+
+`It is similar to density plots but how is it different?`
+
+```{r}
+weather_df |>
+  ggplot(aes(x = tmin, y = name)) + 
+  geom_density_ridges()
+```
+
+### Odds and Ends
+
