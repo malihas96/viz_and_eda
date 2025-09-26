@@ -225,5 +225,18 @@ weather_df |>
 
 ### How to save and embed the plots.
 
+```{r}
+ggp_weather_violin = 
+  weather_df |>
+  ggplot(aes(x = name, y = tmin, fill = name)) + 
+  geom_violin()
+
+
+ggsave(ggp_weather_violin, 
+       filename = "violin_plot.pdf",
+       device = "pdf",
+       height = 6, width = 8)
+
+```
 
 

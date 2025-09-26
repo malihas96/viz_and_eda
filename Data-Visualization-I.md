@@ -430,3 +430,19 @@ weather_df |>
 ![](Data-Visualization-I_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
 
 ### How to save and embed the plots.
+
+``` r
+ggp_weather_violin = 
+  weather_df |>
+  ggplot(aes(x = name, y = tmin, fill = name)) + 
+  geom_violin()
+
+
+ggsave(ggp_weather_violin, 
+       filename = "violin_plot.pdf",
+       device = "pdf",
+       height = 6, width = 8)
+```
+
+    ## Warning: Removed 17 rows containing non-finite outside the scale range
+    ## (`stat_ydensity()`).
