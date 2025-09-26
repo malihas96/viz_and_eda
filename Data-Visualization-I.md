@@ -328,6 +328,35 @@ ggplot(aes(x = tmin, fill = name)) +
 
 ### Making a density plot.
 
+``` r
+ggplot(weather_df, aes(x = tmax, fill = name)) + 
+  geom_density(alpha = .4, adjust = .5, color = "blue")
+```
+
+    ## Warning: Removed 17 rows containing non-finite outside the scale range
+    ## (`stat_density()`).
+
+![](Data-Visualization-I_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
+
+### Making a violin plot.
+
+``` r
+ggplot(weather_df, aes(x = name, y = tmax)) + 
+  geom_violin(aes(fill = name), alpha = .5) + 
+  stat_summary(fun = "median", color = "blue")
+```
+
+    ## Warning: Removed 17 rows containing non-finite outside the scale range
+    ## (`stat_ydensity()`).
+
+    ## Warning: Removed 17 rows containing non-finite outside the scale range
+    ## (`stat_summary()`).
+
+    ## Warning: Removed 3 rows containing missing values or values outside the scale range
+    ## (`geom_segment()`).
+
+![](Data-Visualization-I_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+
 ### Making a boxplot
 
 ``` r
@@ -339,7 +368,7 @@ weather_df |>
     ## Warning: Removed 17 rows containing non-finite outside the scale range
     ## (`stat_boxplot()`).
 
-![](Data-Visualization-I_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
+![](Data-Visualization-I_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
 
 ### Making a ridgeplot.
 
@@ -356,6 +385,48 @@ weather_df |>
     ## Warning: Removed 17 rows containing non-finite outside the scale range
     ## (`stat_density_ridges()`).
 
-![](Data-Visualization-I_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+![](Data-Visualization-I_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
 
 ### Odds and Ends
+
+### Learning Assessment 2
+
+``` r
+weather_df |>
+  ggplot(aes(x = prcp, fill = name)) + 
+  geom_density(alpha = 0.2) ## this isn't really the best result
+```
+
+    ## Warning: Removed 15 rows containing non-finite outside the scale range
+    ## (`stat_density()`).
+
+![](Data-Visualization-I_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
+
+`let's try a histrogram`
+
+``` r
+weather_df |>
+  ggplot(aes(x = prcp, fill = name)) + 
+  geom_histogram() + 
+  facet_grid(name ~ .)
+```
+
+    ## `stat_bin()` using `bins = 30`. Pick better value `binwidth`.
+
+    ## Warning: Removed 15 rows containing non-finite outside the scale range
+    ## (`stat_bin()`).
+
+![](Data-Visualization-I_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
+
+`what if we filter for observations for when prcp > 5. and have a density plot`
+
+``` r
+weather_df |>
+  filter(prcp > 5, prcp <1000) |>
+  ggplot(aes(x = prcp, fill = name)) + 
+  geom_density(alpha = 0.2)
+```
+
+![](Data-Visualization-I_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
+
+### How to save and embed the plots.
