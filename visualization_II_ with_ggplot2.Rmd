@@ -1,0 +1,270 @@
+---
+title: "Visualization II with ggplot2"
+author: "Maliha Safdar"
+date: "2025-09-30"
+output: github_document
+---
+
+```{r}
+library(tidyverse)
+library(patchwork)
+```
+`We’ll still work with NOAA weather data, which is loaded using the same code as in Visualization Pt 1.`
+
+
+```{r}
+library(p8105.datasets)
+data(weather_df)
+```
+
+
+`Revist the scatterplot tmax against tmin made in Visualization I.`
+
+```{r}
+weather_df |> 
+  ggplot(aes(x = tmin, y = tmax)) + 
+  geom_point(aes(color = name), alpha = .5)
+```
+
+
+### Labels
+
+`One of the most important things you can do is provide informative axis labels, plot titles, and captions, all of which can be controlled using labs().`
+
+```{r}
+weather_df |> 
+  ggplot(aes(x = tmin, y = tmax)) + 
+  geom_point(aes(color = name), alpha = .5) + 
+  labs(
+    title = "Temperature plot",
+    x = "Minimum daily temperature (C)",
+    y = "Maxiumum daily temperature (C)",
+    color = "Location",
+    caption = "Data from the rnoaa package",
+    color = "Location"
+  )
+```
+
+
+### Scales
+
+`you’ll occasionally want control over the location and specification of tick marks on the X or Y axis. These can be manipulated in scale_x_* and scale_y_* where * depends on the type of variable mapped to the x and y aesthetics (i.e. continuous vs discrete).`
+
+```{r}
+weather_df |> 
+  ggplot(aes(x = tmin, y = tmax)) + 
+  geom_point(aes(color = name), alpha = .5) + 
+  labs(
+    title = "Temperature plot",
+    x = "Minimum daily temperature (C)",
+    y = "Maxiumum daily temperature (C)",
+    color = "Location",
+    caption = "Data from the rnoaa package") + 
+  scale_x_continuous(
+    breaks = c(-20, 0, 25), 
+    labels = c("-20º C", "0", "25")) +
+  scale_y_continuous(
+    trans = "sqrt",
+    limits = c(10,30)
+  )
+```
+
+`for scale_x_ continuos, continuos is chosen because we are changing the x-axis.`
+
+
+`Using color hues.`
+
+```{r}
+weather_df |> 
+  ggplot(aes(x = tmin, y = tmax)) + 
+  geom_point(aes(color = name), alpha = .5) + 
+  labs(
+    title = "Temperature plot",
+    x = "Minimum daily temperature (C)",
+    y = "Maxiumum daily temperature (C)",
+    color = "Location",
+    caption = "Data from the rnoaa package") + 
+  scale_color_hue(h = c(100, 300))
+```
+`better to use the viridis package instead for better hue colors of the graph.`
+
+```{r}
+library(viridis)
+library(viridisLite)
+```
+
+
+```{r}
+ggp_temp_plot = 
+  weather_df |> 
+  ggplot(aes(x = tmin, y = tmax)) + 
+  geom_point(aes(color = name), alpha = .5) + 
+  labs(
+    title = "Temperature plot",
+    x = "Minimum daily temperature (C)",
+    y = "Maxiumum daily temperature (C)",
+    color = "Location",
+    caption = "Data from the rnoaa package"
+  ) + 
+  viridis::scale_color_viridis(
+    name = "Location", 
+    discrete = TRUE
+  )
+```
+
+
+`Update my base plot`
+
+
+```{r}
+ggp_temp_plot +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+```
+
+### Adding data in geoms
+
+```{r}
+central_park_df = 
+  weather_df |>
+  filter(name == "Molokai_HI")
+
+ggplot(data = central_park_df, aes(x = date, y = tmax, color = name)) + 
+  geom_point() +
+  geom_line(data = central_park_df)
+```
+
+
+### `Patchwork`
+
+
+`Make three plots and combine using patchwork.`
+
+```{r}
+ggp_tmax_tmin = 
+  weather_df |>
+  ggplot(aes(x = tmin, y= tmax, color = name)) +
+  geom_point(alpha = 0.5)
+
+ggp_prec_density = 
+  weather_df |>
+  filter(prcp > 0) |>
+  ggplot(aes(x = prcp, fill = name)) +
+  theme(legend.position = "bottom")
+
+ggp_temp_season = 
+  weather_df |>
+  ggplot(aes(x = date, y=tmax, color = name)) +
+  geom_point(alpha = 0.5)
+  geom_smooth(se = FALSE)
+  
+  (ggp_tmax_tmin + ggp_prec_density)/ ggp_temp_season
+```
+
+### Data Manipulation
+
+
+`Let's make temperature violin plots.`
+
+
+```{r}
+weather_df |>
+  mutate(name = fct_relevel("Molokai_HI", "CentralPrak_NY", "Waterhole_WA")) |>
+  ggplot(aes(x = name, y = tmax, fill = name)) + 
+  geom_violin(alpha = 0.5)
+```
+
+`The above graph is supposed to have three graphs with Molokai being first one.`
+
+
+```{r}
+weather_df |>
+  mutate(name = fct_reorder(name,tmax)) |>
+  ggplot(aes(x = name, y = tmax, fill = name)) +
+  geom_violin(alpha = 0.5)
+```
+
+
+
+#### ` What about data tidiness?`
+
+
+```{r}
+pulse_df = 
+  haven::read_sas("./data/public_pulse_data.sas7bdat") |>
+  janitor::clean_names() |>
+  pivot_longer(
+    bdi_score_bl:bdi_score_12m,
+    names_to = "visit", 
+    names_prefix = "bdi_score_",
+    values_to = "bdi") |>
+  select(id, visit, everything()) |>
+  mutate(
+    visit = recode(visit, "bl" = "00m"),
+    visit = factor(visit, levels = str_c(c("00", "01", "06", "12"), "m"))) |>
+  arrange(id, visit)
+
+ggplot(pulse_df, aes(x = visit, y = bdi)) + 
+  geom_boxplot()
+```
+
+`1. import pups dataframe
+
+```{r}
+pups_df = 
+  read.csv("data/FAS_pups.csv", na = c("NA", ".",""), skip = 3) |>
+  janitor::clean_names() |>
+  mutate(
+    sex = case_match(
+      sex,
+      1 ~ "male",
+      2 ~ "female"
+    )
+  )
+
+litters_df =
+  read.csv("data/FAS_litters.csv", na = c("NA",".", "")) |>
+  janitor::clean_names()|>
+  separate(group, into = c ("dose", "tx_day"), sep = 3)
+
+fas_df =
+  left_join(pups_df, litters_df, by = "litter_number")
+
+fas_df |>
+  select(pd_ears:tx_day) |>
+  pivot_longer(
+    pd_ears:pd_walk,
+    names_to = "outcome",
+    names_prefix = "pd_",
+    values_to = "pn_day") |>
+  mutate(outcome = fct_reorder(outcome, pn_day)) |>
+  drop_na() |>
+  ggplot(aes(x = dose, y = pn_day)) +
+  geom_violin() +
+  facet_grid(tx_day ~ outcome)
+```
+
+
+
+
+### Learning Assessment
+
+```{r}
+weather_df |> 
+  ggplot(aes(x = date, y = tmax)) + 
+  geom_point(aes(color = name), alpha = .5)
+  labs(
+    title = "Temperature against Date",
+    x = "Date",
+    y = "Maxiumum daily temperature (C)",
+    color = "Location",
+    caption = "Data from the rnoaa package") + 
+  scale_x_continuous(
+    breaks = c(-20, 0, 25), 
+    labels = c("-20º C", "0", "25")) +
+  scale_y_continuous(
+    trans = "sqrt",
+    limits = c(10,30)
+  )
+```
+
