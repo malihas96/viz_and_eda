@@ -139,3 +139,51 @@ weather_df |>
 knitr::kable(digits = 2) # the digits tells R how many decimal places to have the data to.
 ```
 
+## Using mutate with group_by.
+
+```{r}
+weather_df |>
+  group_by(name) |>
+  mutate(
+    mean_tmax = mean(tmax, na.rm =TRUE),
+    center_tmax = tmax - mean_tmax # compute center_tmax and subtracting from mean_tmax will give us a seasonal variation of temperature.
+  ) |>
+  ggplot(aes(x = date, y = center_tmax, color = name)) +
+  geom_point()
+```
+
+`Look for cold days.`
+
+```{r}
+weather_df |>
+  group_by(name,month) |>
+  mutate(temp_rank = min_rank(tmax)) |> # how to intrepret the temp_rank, also add desc infront of (tmax) like make it look like min_rank(desc(tmax)) ot will give you the hottest days.
+  filter(temp_rank <2) # the rankings basically show you 1 will be coldest day, 2 will be second coldest day, and so on.
+```
+
+
+`What about lags? Is today's tmax same as yesterday's tmax? anything that changes. This lagged version of readings has to be shown or measured. For example, cases of Covid over the period of a week. It differs right?`
+
+```{r}
+weather_df |>
+  group_by(name) |>
+  mutate(
+    lagged_tmax = lag(tmax) #it tells us the lag by each date.This is the example where each line of code order does matter, so I have to use group_by command before the mutate command. The dplyr will not differentiate between two different locations.
+  )
+
+```
+
+`Use the variables you create.`
+
+```{r}
+weather_df |>
+  group_by(name) |>
+  mutate(temp_change = tmax - lag(tmax)
+  ) |>
+  summarize (
+    temp_change_sd =sd(temp_change, na.rm = TRUE),
+    temp_change_max = max(temp_change, na.rm = TRUE)
+  ) # this is to find the day to day temperature changes for each of the locations. 
+```
+
+
