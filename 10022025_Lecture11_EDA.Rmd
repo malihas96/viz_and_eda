@@ -1,0 +1,141 @@
+---
+title: "EDA"
+author: "Maliha Safdar"
+date: "2025-10-02"
+output: github_document
+---
+
+```{r}
+library(p8105.datasets)
+library(tidyverse)
+library(dplyr)
+
+knitr::opts_chunk$set(
+  fig.width = 6,
+  fig.asp = .6,
+  out.width = "90%"
+)
+
+theme_set(theme_minimal() + theme(legend.position = "bottom"))
+
+options(
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill = "viridis"
+)
+
+scale_colour_discrete = scale_colour_viridis_d
+scale_fill_discrete = scale_fill_viridis_d
+data("weather_df")
+
+weather_df = 
+  weather_df |>
+  mutate(
+    month = lubridate::floor_date(date, unit = "month")) # this was done to round down the dates of each month so feb 23rd becomes feb 1, march 16 becomes march 1. floor_date and lubricate packages help with working with date variables.
+```
+
+### Initial numeric explorations
+
+```{r}
+weather_df |> 
+  ggplot(aes(x = prcp)) + 
+  geom_histogram()
+```
+`This is clearly a very skewed distribution; any formal analyses involving preciptation as a predictor or outcome might be influenced by this fact. It’s important to note that the vast majority of days have no precipitation. Meanwhile, examining the relatively few days have very high precipitation might be helpful. SO only looking at extreme values precipitation that are greater than 1000.`
+
+```{r}
+weather_df |> 
+  filter(prcp >= 1000)
+```
+
+`The two high rainfall days in NYC correspond to tropical storm Henri and hurricane Ida, while the high precipitation day in Molokai took place during a notable cold front.
+
+A close look at the scatterplot below (which focuses on a range of values to emphasize this point) suggests that Central Park and Molokai report temperature values differently from Waterhole …`
+
+`look at the data again.`
+```{r}
+weather_df |> 
+  filter(tmax >= 20, tmax <= 30) |> 
+  ggplot(aes(x = tmin, y = tmax, color = name, shape = name)) + 
+  geom_point(alpha = .75)
+```
+`for central park and molokai are happening around tmax = 27.5 and 30.0, and waterhole_wa is in lower tmax, and when we looked deeper in the data it was found that waterhole_wa was measuring temperature in celcius and the otehr two variables measured in celcius too but converted to farenheit.`
+
+### Group_by and Counting things
+
+`Datasets are often comprised of groups defined by one or more (categorical) variable; group_by() makes these groupings explicit so that they can be included in subsequent operations. For example, we might group weather_df by name and month:`
+
+```{r}
+weather_df |>
+  group_by(name, month) # it may seem like no changes happened but it have the Groups: name, month when you check the tibble. Layers on a grouping structure on top. What good does it do? 
+
+weather_df |>
+  group_by(name) |>
+  summarize(
+    n=n()
+  ) # now it tells you the number of observations for each variables.
+
+weather_df |>
+  group_by(month) |>
+  summarize(
+    n=n()
+  ) # tells you the number of observations by months.
+
+weather_df |>
+  group_by(month) |>
+  summarize(
+    n=n_distinct(date)
+  ) # tells you the number of observations by each unique date.
+```
+`you can count directly`
+
+```{r}
+weather_df |>
+  count(name)
+```
+
+`Several important functions respect grouping structures. You will frequently use summarize to create one-number summaries within each group, or use mutate to define variables within groups. The rest of this example shows these functions in action.`
+
+`Because these (and other) functions will use grouping information if it exists, it is sometimes necessary to remove groups using ungroup()`
+
+`There are more interesting summaries below.`
+
+```{r}
+weather_df |>
+  group_by(name,month) |>
+  summarize(
+    mean_tmax = mean(tmax,na.rm = TRUE),
+    median_tmin = median(tmin, na.rm = TRUE),
+    sd_prcp = sd(prcp,na.rm = TRUE)
+  ) # it tells the mean for tmax and median tmin by name of variable(central park, molokai and waterhole) and the months
+```
+
+`the above code is still a dataframe.`
+
+```{r}
+weather_df |>
+  group_by(name,month) |>
+  summarize(
+    mean_tmax = mean(tmax,na.rm =TRUE)
+  ) |>
+  ggplot(aes(x = month, y =mean_tmax, color = name)) +
+  geom_point() +
+  geom_line()
+```
+
+`The graph above tells us the mean temperature of each locations central park, molokai and waterhole accross period of time which is months ranging from 2021 to 2023.`
+
+`Sometimes formats are
+
+```{r}
+weather_df |>
+  group_by(name,month) |>
+  summarize(
+    mean_tmax = mean(tmax, na.rm = TRUE)
+  ) |>
+  pivot_wider(
+    names_from = name,
+    values_from = mean_tmax
+  ) |> # this table below helps make it more easier to read, tells us mean of each location by month (which is date).
+knitr::kable(digits = 2) # the digits tells R how many decimal places to have the data to.
+```
+
